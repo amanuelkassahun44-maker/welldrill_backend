@@ -1,4 +1,4 @@
-import { Router, Response } from 'express';
+import { Router, Request, Response } from 'express';
 import { db } from '../config/database';
 import { authenticate, requireRole, AuthRequest } from '../middleware/auth.middleware';
 import { sendPushNotification } from '../services/notification.service';
@@ -34,7 +34,7 @@ router.post('/request', authenticate, requireRole('client'), async (req: AuthReq
 });
 
 // GET /api/services/requests — List open requests (for provider job board)
-router.get('/requests', authenticate, async (req: AuthRequest, res: Response) => {
+router.get('/requests', async (req: Request, res: Response) => {
   try {
     const { region_id, min_budget, max_budget, limit = 20, offset = 0 } = req.query;
     let query = `

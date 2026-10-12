@@ -1,10 +1,10 @@
-import { Router, Response } from 'express';
+import { Router, Request, Response } from 'express';
 import { db } from '../config/database';
 import { authenticate, requireRole, AuthRequest } from '../middleware/auth.middleware';
 
 const router = Router();
 
-router.get('/', authenticate, async (req: AuthRequest, res: Response) => {
+router.get('/', async (req: Request, res: Response) => {
   const { category, min_price, max_price, limit = 20, offset = 0 } = req.query;
   let query = `SELECT l.*, u.full_name as seller_name, u.is_verified, r.name_en as region FROM listings l JOIN users u ON u.id = l.seller_id LEFT JOIN regions r ON r.id = l.region_id WHERE l.is_available = true AND l.is_approved = true`;
   const params: unknown[] = [];

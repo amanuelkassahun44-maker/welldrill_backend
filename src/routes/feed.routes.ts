@@ -1,4 +1,4 @@
-import { Router, Response } from 'express';
+import { Router, Request, Response } from 'express';
 import { db } from '../config/database';
 import { authenticate, AuthRequest } from '../middleware/auth.middleware';
 import { moderatePost } from '../services/content-moderation.service';
@@ -47,21 +47,18 @@ router.post('/post', authenticate, async (req: AuthRequest, res: Response) => {
 });
 
 // GET /api/feed — Get approved posts (TikTok-style paginated feed)
-router.get('/', authenticate, async (req: AuthRequest, res: Response) => {
+router.get('/', async (req: Request, res: Response) => {
   try {
     const { limit = 10, offset = 0 } = req.query;
     const result = await db.query(
       `SELECT p.*, u.full_name as author_name, u.avatar_url, u.is_verified,
-              COALESCE(l.liked, false) as is_liked
+              false as is_liked
        FROM posts p
        JOIN users u ON u.id = p.author_id
-       LEFT JOIN (
-         SELECT post_id, true as liked FROM post_likes WHERE user_id = $1
-       ) l ON l.post_id = p.id
        WHERE p.is_visible = true AND p.ai_moderation = 'approved'
        ORDER BY p.created_at DESC
-       LIMIT $2 OFFSET $3`,
-      [req.user!.id, limit, offset]
+       LIMIT $1 OFFSET $2`,
+      [limit, offset]
     );
     return res.json(result.rows);
   } catch (err: unknown) {
