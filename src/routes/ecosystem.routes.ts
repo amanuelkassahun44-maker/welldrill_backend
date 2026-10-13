@@ -57,6 +57,15 @@ router.get('/all', (_req: Request, res: Response) => {
   });
 });
 
+// Anti-circumvention phone & social patterns for feed posts & comments
+const PHONE_PATTERN = /(\+?251[-. ]?)?(0?[97]\d[-. ]?\d{3}[-. ]?\d{4})|\b0[97]\d{8}\b|\b\d[\d\s\-.]{7,14}\d\b|(ደውሉ|ቁጥሬ|ቁጥሩ|ቁጥሯ|ስልኬ|ስልክ|call\s*me|my\s*phone|contact\s*me)[\s:]*[\d\s\-+]{5,}/gi;
+const SOCIAL_PATTERN = /(t\.me\/|telegram|ቴሌግራም|wa\.me\/|whatsapp|ዋትሳፕ|facebook|ፌስቡክ|fb\.me|tiktok|ቲክቶክ|instagram|ኢንስታግራም|viber|ቫይበር|imo|ኢሞ|@[a-zA-Z0-9_\.]{3,})/gi;
+
+function sanitizeFeedText(text: string): string {
+  if (!text) return '';
+  return text.replace(PHONE_PATTERN, '[***]').replace(SOCIAL_PATTERN, '[***]');
+}
+
 // GET /api/ecosystem/reels
 router.get('/reels', (_req: Request, res: Response) => {
   res.json(cachedReels);
@@ -68,6 +77,11 @@ router.post('/reels', (req: Request, res: Response) => {
     const reel = req.body;
     if (!reel || !reel.id) {
       return res.status(400).json({ error: 'Invalid reel data' });
+    }
+
+    // Anti-circumvention text check & sanitization
+    if (reel.caption) {
+      reel.caption = sanitizeFeedText(reel.caption);
     }
 
     // If videoBase64 is passed, save to disk
@@ -86,15 +100,65 @@ router.post('/reels', (req: Request, res: Response) => {
       }
     }
 
-    // Remove existing if duplicate
-    cachedReels = cachedReels.filter((r) => r.id !== reel.id);
-    cachedReels.unshift(reel);
+    // If imageBase64 is passed (Photo Post), save to disk
+    if (reel.imageBase64 && typeof reel.imageBase64 === 'string' && reel.imageBase64.length > 50) {
+      try {
+        const ext = reel.imageExtension || '.jpg';
+        const filename = `feed_img_${Date.now()}_${uuidv4().substring(0, 8)}${ext}`;
+        const filePath = path.join(uploadsDir, filename);
+        const cleanBase64 = reel.imageBase64.replace(/^data:image\/\w+;base64,/, '');
+        const buffer = Buffer.from(cleanBase64, 'base64');
+        fs.writeFileSync(filePath, buffer);
+        reel.imagePath = `${getBaseUrl(req)}/uploads/${filename}`;
+        delete reel.imageBase64;
+      } catch (e) {
+        console.error('Failed to save base64 feed image:', e);
+      }
+    }
+
+    // Check if reel already exists (e.g. for likes/comments update)
+    const existingIndex = cachedReels.findIndex((r) => r.id === reel.id);
+    if (existingIndex >= 0) {
+      cachedReels[existingIndex] = { ...cachedReels[existingIndex], ...reel };
+    } else {
+      cachedReels.unshift(reel);
+    }
     if (cachedReels.length > 200) cachedReels = cachedReels.slice(0, 200);
 
     return res.status(201).json({ success: true, reel });
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }
+});
+
+// POST /api/ecosystem/reels/:id/like
+router.post('/reels/:id/like', (req: Request, res: Response) => {
+  const { id } = req.params;
+  const target = cachedReels.find((r) => r.id === id);
+  if (!target) return res.status(404).json({ error: 'Reel not found' });
+  const delta = req.body.delta ?? 1;
+  target.likesCount = Math.max(0, (target.likesCount || 0) + delta);
+  return res.json({ success: true, likesCount: target.likesCount });
+});
+
+// POST /api/ecosystem/reels/:id/comment
+router.post('/reels/:id/comment', (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { author, text } = req.body;
+  const target = cachedReels.find((r) => r.id === id);
+  if (!target) return res.status(404).json({ error: 'Reel not found' });
+  if (!text || !text.trim()) return res.status(400).json({ error: 'Empty comment' });
+
+  const cleanText = sanitizeFeedText(text.trim());
+  target.comments = target.comments || [];
+  const commentObj = {
+    id: `c_${Date.now()}`,
+    author: author || 'User',
+    text: cleanText,
+    createdAt: new Date().toISOString(),
+  };
+  target.comments.push(commentObj);
+  return res.json({ success: true, comment: commentObj, totalComments: target.comments.length });
 });
 
 // GET /api/ecosystem/listings
