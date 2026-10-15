@@ -31,6 +31,123 @@ const upload = multer({
 let cachedReels: any[] = [];
 let cachedListings: any[] = [];
 let cachedJobs: any[] = [];
+let cachedDrillers: any[] = [
+  {
+    id: 'driller_abyssinia',
+    companyName: 'አቢሲኒያ የጥልቅ ውሃ ቁፋሮ (Abyssinia Drilling)',
+    name: 'አቢሲኒያ የጥልቅ ውሃ ቁፋሮ',
+    phone: '0911223344',
+    realPhone: '0911223344',
+    regionName: 'አዲስ አበባ',
+    location: 'አዲስ አበባ (Addis Ababa)',
+    rigTypes: 'DTH Pneumatic Heavy Rig',
+    maxDepthMeters: 350,
+    pricePerMeterMin: 8000.0,
+    pricePerMeterMax: 14000.0,
+    rating: 4.9,
+    reviewCount: 24,
+    isVerified: true,
+    photoUrl: null,
+    reviews: [
+      { user: 'ዳዊት ከለቡ', rating: 5, comment: 'በጣም ፈጣን እና ታማኝ ናቸው! በ 4 ቀን ውስጥ 180 ሜትር ቆፍረው ጨረሱልኝ።' },
+    ],
+  },
+  {
+    id: 'driller_rift_valley',
+    companyName: 'ሪፍት ቫሊ ግራውንድ ዋተር (Rift Valley Water)',
+    name: 'ሪፍት ቫሊ ግራውንድ ዋተር',
+    phone: '0922334455',
+    realPhone: '0922334455',
+    regionName: 'ኦሮሚያ',
+    location: 'ኦሮሚያ (Oromia)',
+    rigTypes: 'Truck Mounted Hydraulic Rig',
+    maxDepthMeters: 280,
+    pricePerMeterMin: 8500.0,
+    pricePerMeterMax: 13000.0,
+    rating: 4.8,
+    reviewCount: 18,
+    isVerified: true,
+    photoUrl: null,
+    reviews: [
+      { user: 'አቶ በቀለ', rating: 5, comment: 'አዳማ አቅራቢያ ጥሩ ውሃ አውጥተውልናል። ዋጋቸውም ተመጣጣኝ ነው።' },
+    ],
+  },
+  {
+    id: 'driller_blue_nile',
+    companyName: 'ዓባይ ጥልቅ ቦርሃል ሰርቪስ (Blue Nile Deep Wells)',
+    name: 'ዓባይ ጥልቅ ቦርሃል ሰርቪስ',
+    phone: '0933445566',
+    realPhone: '0933445566',
+    regionName: 'አማራ',
+    location: 'አማራ (Amhara)',
+    rigTypes: 'Rotary Drilling Rig',
+    maxDepthMeters: 400,
+    pricePerMeterMin: 9000.0,
+    pricePerMeterMax: 15000.0,
+    rating: 5.0,
+    reviewCount: 31,
+    isVerified: true,
+    photoUrl: null,
+    reviews: [
+      { user: 'ማርታ ከባህር ዳር', rating: 5, comment: 'ባለሙያዎቻቸው እጅግ ጎበዞች ናቸው።' },
+    ],
+  },
+  {
+    id: 'driller_awash',
+    companyName: 'አዋሽ ሃይድሮ ቁፋሮ (Awash Hydro Drilling)',
+    name: 'አዋሽ ሃይድሮ ቁፋሮ',
+    phone: '0944556677',
+    realPhone: '0944556677',
+    regionName: 'ድሬ ዳዋ',
+    location: 'ድሬ ዳዋ (Dire Dawa)',
+    rigTypes: 'DTH & Mud Rotary Rig',
+    maxDepthMeters: 300,
+    pricePerMeterMin: 8000.0,
+    pricePerMeterMax: 14000.0,
+    rating: 4.7,
+    reviewCount: 14,
+    isVerified: true,
+    photoUrl: null,
+    reviews: [],
+  },
+  {
+    id: 'driller_tigray',
+    companyName: 'ሰላም የውሃ ቁፋሮ (Selam Water Drilling)',
+    name: 'ሰላም የውሃ ቁፋሮ',
+    phone: '0955667788',
+    realPhone: '0955667788',
+    regionName: 'ትግራይ',
+    location: 'ትግራይ (Tigray)',
+    rigTypes: 'Trailer Mounted Rig',
+    maxDepthMeters: 250,
+    pricePerMeterMin: 8500.0,
+    pricePerMeterMax: 12500.0,
+    rating: 4.9,
+    reviewCount: 9,
+    isVerified: true,
+    photoUrl: null,
+    reviews: [],
+  },
+  {
+    id: 'driller_sidama',
+    companyName: 'ሀዋሳ ቦርሃል ቁፋሮ (Hawassa Borehole Tech)',
+    name: 'ሀዋሳ ቦርሃል ቁፋሮ',
+    phone: '0966778899',
+    realPhone: '0966778899',
+    regionName: 'ሲዳማ',
+    location: 'ሲዳማ (Sidama)',
+    rigTypes: 'Hydraulic DTH Rig',
+    maxDepthMeters: 220,
+    pricePerMeterMin: 8000.0,
+    pricePerMeterMax: 13500.0,
+    rating: 4.8,
+    reviewCount: 11,
+    isVerified: true,
+    photoUrl: null,
+    reviews: [],
+  },
+];
+let cachedSupportMessages: any[] = [];
 
 // Base URL helper
 function getBaseUrl(req: Request): string {
@@ -54,6 +171,8 @@ router.get('/all', (_req: Request, res: Response) => {
     reels: cachedReels,
     listings: cachedListings,
     jobs: cachedJobs,
+    drillers: cachedDrillers,
+    support_messages: cachedSupportMessages,
   });
 });
 
@@ -217,6 +336,82 @@ router.post('/jobs', (req: Request, res: Response) => {
     cachedJobs.unshift(job);
     if (cachedJobs.length > 200) cachedJobs = cachedJobs.slice(0, 200);
     return res.status(201).json({ success: true, job });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/ecosystem/drillers
+router.get('/drillers', (_req: Request, res: Response) => {
+  res.json(cachedDrillers);
+});
+
+// POST /api/ecosystem/drillers
+router.post('/drillers', (req: Request, res: Response) => {
+  try {
+    const driller = req.body;
+    if (!driller || !driller.id) {
+      return res.status(400).json({ error: 'Invalid driller data' });
+    }
+
+    // Save profile photo if imageBase64 is passed
+    if (driller.imageBase64 && typeof driller.imageBase64 === 'string' && driller.imageBase64.length > 50) {
+      try {
+        const ext = driller.imageExtension || '.jpg';
+        const filename = `driller_${Date.now()}_${uuidv4().substring(0, 8)}${ext}`;
+        const filePath = path.join(uploadsDir, filename);
+        const cleanBase64 = driller.imageBase64.replace(/^data:image\/\w+;base64,/, '');
+        const buffer = Buffer.from(cleanBase64, 'base64');
+        fs.writeFileSync(filePath, buffer);
+        driller.photoUrl = `${getBaseUrl(req)}/uploads/${filename}`;
+        delete driller.imageBase64;
+      } catch (e) {
+        console.error('Failed to save driller base64 image:', e);
+      }
+    }
+
+    cachedDrillers = cachedDrillers.filter((d) => d.id !== driller.id && d.phone !== driller.phone);
+    cachedDrillers.unshift(driller);
+    if (cachedDrillers.length > 300) cachedDrillers = cachedDrillers.slice(0, 300);
+    return res.status(201).json({ success: true, driller });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/ecosystem/support
+router.get('/support', (_req: Request, res: Response) => {
+  res.json(cachedSupportMessages);
+});
+
+// POST /api/ecosystem/support
+router.post('/support', (req: Request, res: Response) => {
+  try {
+    const msg = req.body;
+    if (!msg || !msg.id) {
+      return res.status(400).json({ error: 'Invalid support message data' });
+    }
+
+    // Handle attached screenshot/photo
+    if (msg.imageBase64 && typeof msg.imageBase64 === 'string' && msg.imageBase64.length > 50) {
+      try {
+        const ext = msg.imageExtension || '.jpg';
+        const filename = `support_${Date.now()}_${uuidv4().substring(0, 8)}${ext}`;
+        const filePath = path.join(uploadsDir, filename);
+        const cleanBase64 = msg.imageBase64.replace(/^data:image\/\w+;base64,/, '');
+        const buffer = Buffer.from(cleanBase64, 'base64');
+        fs.writeFileSync(filePath, buffer);
+        msg.imagePath = `${getBaseUrl(req)}/uploads/${filename}`;
+        delete msg.imageBase64;
+      } catch (e) {
+        console.error('Failed to save support base64 image:', e);
+      }
+    }
+
+    cachedSupportMessages = cachedSupportMessages.filter((m) => m.id !== msg.id);
+    cachedSupportMessages.push(msg); // Keep chronological order
+    if (cachedSupportMessages.length > 500) cachedSupportMessages = cachedSupportMessages.slice(-500);
+    return res.status(201).json({ success: true, message: msg });
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }
