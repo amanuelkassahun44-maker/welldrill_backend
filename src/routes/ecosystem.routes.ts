@@ -3,6 +3,7 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
+import { readVersionConfig, versionRouter } from './version.routes';
 
 const router = Router();
 
@@ -58,8 +59,12 @@ router.get('/all', (_req: Request, res: Response) => {
     jobs: cachedJobs,
     drillers: cachedDrillers,
     support_messages: cachedSupportMessages,
+    app_version: readVersionConfig(),
   });
 });
+
+// App version management endpoint for ecosystem
+router.use('/version', versionRouter);
 
 // Anti-circumvention phone & social patterns for feed posts & comments
 const PHONE_PATTERN = /(\+?251[-. ]?)?(0?[97]\d[-. ]?\d{3}[-. ]?\d{4})|\b0[97]\d{8}\b|\b\d[\d\s\-.]{7,14}\d\b|(ደውሉ|ቁጥሬ|ቁጥሩ|ቁጥሯ|ስልኬ|ስልክ|call\s*me|my\s*phone|contact\s*me)[\s:]*[\d\s\-+]{5,}/gi;
