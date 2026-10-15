@@ -15,6 +15,8 @@ export interface AppVersionConfig {
   releaseNotesEn: string;
   downloadUrl: string;
   websiteUrl: string;
+  apkUrlCustomer: string;
+  apkUrlDriller: string;
   titleAm: string;
   titleEn: string;
   updatedAt: string;
@@ -30,6 +32,8 @@ const defaultVersionConfig: AppVersionConfig = {
   releaseNotesEn: 'New performance improvements, bug fixes, and enhanced security updates!',
   downloadUrl: 'https://t.me/WaterDrilli',
   websiteUrl: 'https://water-drilling-website.vercel.app/',
+  apkUrlCustomer: 'https://water-drilling-website.vercel.app/WellDrill_Ethiopia.apk',
+  apkUrlDriller: 'https://water-drilling-website.vercel.app/WellDrill_Driller_Pro.apk',
   titleAm: '🚀 አዲስ የ WellDrill ስሪት ተለቋል!',
   titleEn: '🚀 New WellDrill Update Available!',
   updatedAt: new Date().toISOString(),
@@ -66,6 +70,32 @@ router.get('/', (_req: Request, res: Response) => {
   res.json(config);
 });
 
+// GET /api/version/download/customer - Direct APK download for customer app
+router.get('/download/customer', (_req: Request, res: Response) => {
+  const filePath = path.join(process.cwd(), 'uploads', 'WellDrill_Ethiopia.apk');
+  if (fs.existsSync(filePath)) {
+    return res.download(filePath, 'WellDrill_Ethiopia.apk');
+  }
+  const config = readVersionConfig();
+  if (config.apkUrlCustomer && config.apkUrlCustomer.startsWith('http')) {
+    return res.redirect(config.apkUrlCustomer);
+  }
+  return res.redirect(config.websiteUrl);
+});
+
+// GET /api/version/download/driller - Direct APK download for driller app
+router.get('/download/driller', (_req: Request, res: Response) => {
+  const filePath = path.join(process.cwd(), 'uploads', 'WellDrill_Driller_Pro.apk');
+  if (fs.existsSync(filePath)) {
+    return res.download(filePath, 'WellDrill_Driller_Pro.apk');
+  }
+  const config = readVersionConfig();
+  if (config.apkUrlDriller && config.apkUrlDriller.startsWith('http')) {
+    return res.redirect(config.apkUrlDriller);
+  }
+  return res.redirect(config.websiteUrl);
+});
+
 // POST /api/version - Admin or deploy hook to update app version config
 router.post('/', (req: Request, res: Response) => {
   try {
@@ -81,6 +111,8 @@ router.post('/', (req: Request, res: Response) => {
       releaseNotesEn: body.releaseNotesEn || current.releaseNotesEn,
       downloadUrl: body.downloadUrl || current.downloadUrl,
       websiteUrl: body.websiteUrl || current.websiteUrl,
+      apkUrlCustomer: body.apkUrlCustomer || current.apkUrlCustomer,
+      apkUrlDriller: body.apkUrlDriller || current.apkUrlDriller,
       titleAm: body.titleAm || current.titleAm,
       titleEn: body.titleEn || current.titleEn,
       updatedAt: new Date().toISOString(),
